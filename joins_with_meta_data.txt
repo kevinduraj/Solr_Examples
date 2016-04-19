@@ -1,3 +1,6 @@
+# apache 2.0 license
+# mitchell.henderson@datastax.com
+
 CREATE KEYSPACE IF NOT EXISTS docstore WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
 
 CREATE TABLE IF NOT EXISTS docstore.metadata (

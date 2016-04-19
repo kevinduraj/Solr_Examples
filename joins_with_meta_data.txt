@@ -1,0 +1,39 @@
+CREATE KEYSPACE IF NOT EXISTS docstore WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+
+CREATE TABLE IF NOT EXISTS docstore.metadata (
+    userid text,
+    docid text,
+    joinkey text,
+    title text,
+    body text,
+    PRIMARY KEY(userid, docid));
+
+
+CREATE TABLE IF NOT EXISTS docstore.unmapped (
+    userid text,
+    docid text,
+    joinkey text,
+    field text,
+    value text,
+    PRIMARY KEY(userid, docid, field));
+
+~/dse/bin/dsetool create_core docstore.metadata generateResources=true
+~/dse/bin/dsetool create_core docstore.unmapped generateResources=true
+
+INSERT INTO docstore.metadata(userid, docid, joinkey, title, body) VALUES('1', '1', '1_1', 'a test title', 'a foobar body');
+INSERT INTO docstore.unmapped(userid, docid, joinkey, field, value) VALUES('1', '1', '1_1', 'unmapped1', 'value1');
+INSERT INTO docstore.metadata(userid, docid, joinkey, title, body) VALUES('1', '2', '1_2', 'a test title', 'a foobar body');
+INSERT INTO docstore.unmapped(userid, docid, joinkey, field, value) VALUES('1', '2', '1_2', 'unmapped2', 'value2');
+INSERT INTO docstore.unmapped(userid, docid, joinkey, field, value) VALUES('1', '2', '1_2', 'unmapped1', 'value3');
+
+~/dse/bin/nodetool flush
+
+// find all rows which have the field unmapped1
+SELECT * FROM docstore.metadata WHERE solr_query='{"q":"*:*", "fq":"{!join from=joinkey to=joinkey force=true fromIndex=docstore.unmapped}field:unmapped1"}';
+
+// find all rows which have the field unmapped1 which has a value of value1
+SELECT * FROM docstore.metadata WHERE solr_query='{"q":"*:*", "fq":"{!join from=joinkey to=joinkey force=true fromIndex=docstore.unmapped}(value:value1 AND _query_:\"{!join from=joinkey to=joinkey force=true fromIndex=docstore.unmapped}(field:unmapped1)\")"}';
+
+SELECT * FROM docustore.query_table_by_author WHERE solr_query='{"q":"*:*", "fq":"{!join from=docu_id to=docu_id force=true fromIndex=docu_store.metadatatable}document_metadata_value:\"b-trees in modern database\""}'
+
+SELECT * FROM docustore.query_table_by_author solr_query='{"q":"*:*", "fq":"{!join from=docu_id to=docu_id force=true fromIndex=docustore.query_table_by_author} document_metadata_key:author AND document_metadata_value:Kurt V*"}';
